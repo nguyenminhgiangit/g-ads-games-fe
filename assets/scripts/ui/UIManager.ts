@@ -1,10 +1,11 @@
 import { _decorator, Component, Node } from 'cc';
 import { Toast } from '../common/Toast';
+import { Notice, NoticeType } from '../common/Notice';
 
 const { ccclass, property } = _decorator;
 
 @ccclass('UIManager')
-export class UIManager extends Component {
+class UIManager extends Component {
     private static instance: UIManager;
 
     public static getInstance(): UIManager {
@@ -23,6 +24,9 @@ export class UIManager extends Component {
     @property(Node)
     toastLayer: Node = null!;
 
+    @property(Node)
+    noticeLayer: Node = null!;
+
     onLoad() {
         UIManager.instance = this;
 
@@ -30,6 +34,7 @@ export class UIManager extends Component {
         this.showInputForm(false);
 
         this.toastLayer.active = true;
+        this.noticeLayer.active = true;
     }
 
     showLoading(show: boolean) {
@@ -47,4 +52,17 @@ export class UIManager extends Component {
     showToast(message: string) {
         Toast.getInstance().show(message);
     }
+
+    showNotice(
+        title: string,
+        content: string,
+        type: NoticeType = NoticeType.NOTICE,
+        cbFuncYes?: Function,
+        cbFuncNo?: Function
+    ) {
+        Notice.getInstance().show(title, content, type, cbFuncYes, cbFuncNo);
+    }
+}
+export function uiManager() {
+    return UIManager.getInstance()
 }

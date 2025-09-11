@@ -1,8 +1,12 @@
 import { _decorator, Component, Prefab, instantiate, resources } from 'cc';
-import { GameConfig } from './GameConfig';
 import { BaseGame } from './BaseGame';
 import { GameRegistry } from './GameRegistry';
-import { UIManager } from '../ui/UIManager';
+import { clientApi } from '../network/client.api';
+import { DataGameManager } from '../managers/user.game.profile.manager';
+import { getGamePrefabName } from '../helpers/game.helper';
+import { uiManager } from '../ui/UIManager';
+import { NoticeType } from '../common/Notice';
+import { Toast } from '../common/Toast';
 
 const { ccclass } = _decorator;
 
@@ -13,12 +17,21 @@ export class GameManager extends Component {
     private currentGame: BaseGame | null = null;
 
     async start() {
-        const cfg = await GameConfig.fetchFromServer();
-        console.log("[GameManager] Loaded config:", cfg);
-        await this.loadGame(cfg.currentGame);
+
+        const rs = await this.onGuest();
+        if (rs.ok === false) {
+            uiManager().showNotice('NETWORK', rs.error, NoticeType.NO_BUTTON);
+            uiManager().showLoading(false);
+            return;
+        }
+
+        console.warn('GameManager start >> ', DataGameManager.gameId);
+        const currentGameName = getGamePrefabName(DataGameManager.gameId);
+        await this.loadGame(currentGameName);
     }
 
     private loadGame(gameName: string): Promise<void> {
+        console.log('loadGame... ', gameName);
         return new Promise((resolve, reject) => {
             resources.load(`prefabs/games/${gameName}`, Prefab, (err, prefab: Prefab) => {
                 if (err) return reject(err);
@@ -42,10 +55,28 @@ export class GameManager extends Component {
                 this.currentGame = comp;
                 comp.loadRates().then(() => {
                     comp.initGame();
-                    UIManager.getInstance().showLoading(false);
+                    uiManager().showLoading(false);
                     resolve();
                 }).catch(reject);
             });
         });
+    }
+
+    private async onGuest() {
+        console.log('onGuest...');
+        const respAccess = await clientApi.auth.guestLogin();
+        if (respAccess.ok === false) {
+            console.log('onGuest auth failed:: ', respAccess.error);
+            return { ok: false, error: respAccess.error };
+        }
+        const message = respAccess.isNew === true ? "Welcome to you!" : "Welcome back!";
+        uiManager().showToast(message);
+
+        const respInfo = await clientApi.users.gameMe();
+        if (respInfo.ok === false) {
+            console.log('onGuest info failed:: ', respInfo.error);
+            return { ok: false, error: respInfo.error };
+        }
+        return { ok: true }
     }
 }

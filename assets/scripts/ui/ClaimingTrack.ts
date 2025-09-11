@@ -1,7 +1,6 @@
 import { _decorator, instantiate, Node, Prefab, ProgressBar, UITransform } from 'cc';
 import { BaseComponent } from '../core/BaseComponent';
-import { EVENT_SPIN_UPDATE_DISPLAY } from '../core/GameEvents';
-import { PlayerData } from '../managers/PlayerData';
+import { DataGameManager } from '../managers/user.game.profile.manager';
 const { ccclass, property } = _decorator;
 
 @ccclass('ClaimingTrack')
@@ -11,10 +10,8 @@ export class ClaimingTrack extends BaseComponent {
     @property(Prefab) trackPrefab: Prefab = null!;
 
     protected onLoad(): void {
+        super.onLoad();
         this.initUI();
-        this.listen(EVENT_SPIN_UPDATE_DISPLAY, () => {
-            this.onDisplay();
-        });
     }
     protected start(): void {
         this.initUI();
@@ -22,8 +19,9 @@ export class ClaimingTrack extends BaseComponent {
     }
 
     initUI() {
-        const itemsToClaim: string[] = ["📱", "🛵", "🚗"];
-        const valuesToClaim = PlayerData.instance.claimMilestones;
+        // const itemsToClaim: string[] = ["📱", "🛵", "🚗"];
+        const claimMilestones = DataGameManager.claimMilestones;
+        const valuesToClaim = claimMilestones.map(m => m.reward);
         const minValue = valuesToClaim[0] || 1;
         const maxValue = valuesToClaim[valuesToClaim.length - 1] || 1;
 
@@ -31,7 +29,7 @@ export class ClaimingTrack extends BaseComponent {
         valuesToClaim.forEach((milestone, index) => {
             const itemNode = instantiate(this.trackPrefab);
             const itemComp = itemNode.getComponent('ClaimingItem') as any;
-            itemComp.init(milestone, itemsToClaim[index] || "🎁");
+            itemComp.init(milestone, claimMilestones[index].label || "🎁");
             this.trackContent.addChild(itemNode);
 
             //position x
@@ -40,10 +38,9 @@ export class ClaimingTrack extends BaseComponent {
             itemNode.setPosition(x, 0, 0);
         });
     }
-    protected onDisplay(): void {
-        const playerData = PlayerData.instance;
-        const claimingPoint = playerData.getClaimingPoint() || 0;
-        const claimMilestones = playerData.claimMilestones || [];
+    protected onRefreshUI(): void {
+        const claimingPoint = DataGameManager.claimingPoint || 0;
+        const claimMilestones = DataGameManager.valueClaimMilestones || [];
 
         //update milestones state
         for (let i = 0; i < claimMilestones.length; i++) {
@@ -58,10 +55,9 @@ export class ClaimingTrack extends BaseComponent {
     }
 
     private get progress(): number {
-        const playerData = PlayerData.instance;
-        const claimingPoint = playerData.getClaimingPoint() || 0;
+        const claimingPoint = DataGameManager.claimingPoint || 0;
         if (claimingPoint <= 0) return 0;
-        const claimMilestones = playerData.claimMilestones || [];
+        const claimMilestones = DataGameManager.valueClaimMilestones || [];
         if (claimingPoint < claimMilestones[0]) return 0;
 
         for (let i = 0; i < claimMilestones.length; i++) {

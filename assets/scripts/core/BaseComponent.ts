@@ -1,5 +1,6 @@
 import { _decorator, Component, Game, game } from "cc";
 import { GameEvents } from "./GameEvents";
+import { DataGameManager, EVT_DATA_GAME_CHANGED } from "../managers/user.game.profile.manager";
 const { ccclass } = _decorator;
 
 interface Listener {
@@ -13,8 +14,12 @@ export class BaseComponent extends Component {
     private _listeners: Listener[] = [];
     private _focusEventsEnabled: boolean = false;
 
+    protected onLoad(): void {
+        DataGameManager.events.on(EVT_DATA_GAME_CHANGED, this.onRefreshUI, this);
+        this.onListenners();
+    }
     protected start(): void {
-        this.onDisplay();
+        this.onRefreshUI();
     }
     protected enableFocusEvents() {
         if (this._focusEventsEnabled) return;
@@ -39,6 +44,8 @@ export class BaseComponent extends Component {
         // Class con override khi cần
     }
 
+    protected onListenners() { }
+
     private _onLostFocus() {
         this.onLostFocus();
     }
@@ -56,7 +63,7 @@ export class BaseComponent extends Component {
         GameEvents.emit(event, ...args);
     }
 
-    protected onDisplay() {
+    protected onRefreshUI() {
         // Class con override khi cần
     }
 
@@ -67,5 +74,7 @@ export class BaseComponent extends Component {
         this._listeners = [];
 
         this.disableFocusEvents();
+
+        DataGameManager.events.off(EVT_DATA_GAME_CHANGED, this.onRefreshUI, this);
     }
 }

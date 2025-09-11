@@ -1,4 +1,3 @@
-import { sys } from "cc";
 import { Toast } from "../common/Toast";
 
 export type PlayerInfo = {
@@ -9,8 +8,8 @@ export type PlayerInfo = {
 
 const MAX_SPINS = 3;
 
-export class PlayerData {
-    private static _instance: PlayerData;
+export class PlayerData1 {
+    private static _instance: PlayerData1;
     private _data: PlayerInfo;
 
     private STORAGE_KEY = "ads#player#data";
@@ -22,9 +21,9 @@ export class PlayerData {
         this._data = this.load();
     }
 
-    public static get instance(): PlayerData {
+    public static get instance(): PlayerData1 {
         if (!this._instance) {
-            this._instance = new PlayerData();
+            this._instance = new PlayerData1();
         }
         return this._instance;
     }
@@ -34,7 +33,7 @@ export class PlayerData {
     }
 
     private load(): PlayerInfo {
-        const json = sys.localStorage.getItem(this.STORAGE_KEY);
+        const json = localStorage.getItem(this.STORAGE_KEY);
         if (json) {
             try {
                 Toast.getInstance().show("Welcome back!");
@@ -55,12 +54,12 @@ export class PlayerData {
             spinsLeft: MAX_SPINS,
             score: 0,
         };
-        sys.localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
         return data;
     }
 
     public save() {
-        sys.localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._data));
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this._data));
     }
 
     // Getters / Setters

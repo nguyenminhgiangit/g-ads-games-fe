@@ -9,7 +9,7 @@ export class ClaimingItem extends BaseComponent {
     @property(Node) canClaiming: Node = null!;
 
 
-    protected onDisplay(): void {
+    protected onRefreshUI(): void {
     }
 
     public init(milestone: number, item: string) {

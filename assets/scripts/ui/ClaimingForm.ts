@@ -1,8 +1,8 @@
 import { _decorator, Button, Label } from 'cc';
-import { UIManager } from './UIManager';
 import { BaseComponent } from '../core/BaseComponent';
-import { PlayerData } from '../managers/PlayerData';
-import { EVENT_SPIN_UPDATE_DISPLAY } from '../core/GameEvents';
+import { DataGameManager } from '../managers/user.game.profile.manager';
+import { gameReset } from '../services/game.service';
+import { uiManager } from './UIManager';
 const { ccclass, property } = _decorator;
 
 @ccclass('ClaimingForm')
@@ -17,47 +17,47 @@ export class ClaimingForm extends BaseComponent {
     private btnClaim: Button = null!;
 
     protected onLoad(): void {
+        super.onLoad();
         this.enableFocusEvents()
     }
 
     start() {
         super.start();
-        UIManager.getInstance().showClaimForm(false);
-        this.onGainFocus();
+        uiManager().showClaimForm(false);
     }
 
     protected onEnable(): void {
-        this.onDisplay();
+        this.onRefreshUI();
     }
 
     protected onGainFocus(): void {
-        const playerData = PlayerData.instance;
-        if (playerData.spinsLeft <= 0) {
-            UIManager.getInstance().showClaimForm(true);
-        }
+        this.onRefreshUI();
     }
 
     onClaimClicked() {
         console.log("Claim button clicked");
-        UIManager.getInstance().showInputForm(true);
+        uiManager().showInputForm(true);
     }
-    onReplayClicked() {
-        PlayerData.instance.reset();
-        this.emit(EVENT_SPIN_UPDATE_DISPLAY);
-
-        UIManager.getInstance().showClaimForm(false);
+    async onReplayClicked() {
+        //call api
+        const rs = await gameReset();
+        if (rs === true)
+            uiManager().showClaimForm(false);
     }
     onCloseClicked() {
-        UIManager.getInstance().showClaimForm(false);
+        uiManager().showClaimForm(false);
     }
 
-    protected onDisplay() {
-        const playerData = PlayerData.instance;
-        const hasSpins = playerData.spinsLeft > 0;
+    protected onRefreshUI() {
+        const spinLeft = DataGameManager.spinLeft;
+        const hasSpins = spinLeft > 0;
         this.btnContinue.node.active = hasSpins;
 
-        const claimingPoint = playerData.getClaimingPoint() || 0;
+        const claimingPoint = DataGameManager.claimingPoint || 0;
         this.lblClaimingPoint.string = `${claimingPoint}`;
         this.btnClaim.interactable = claimingPoint > 0;
+
+        const isShow = claimingPoint > 0 || spinLeft <= 0;
+        uiManager().showClaimForm(isShow);
     }
 }

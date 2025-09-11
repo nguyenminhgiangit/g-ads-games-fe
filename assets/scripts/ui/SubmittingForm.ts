@@ -1,9 +1,9 @@
-import { _decorator, Color, Component, EditBox, Label, Node } from 'cc';
-import { API } from '../network/API';
-import { UIManager } from './UIManager';
-import { PlayerData } from '../managers/PlayerData';
+import { _decorator, Color, EditBox, Label } from 'cc';
+import { uiManager } from './UIManager';
 import { BaseComponent } from '../core/BaseComponent';
-import { EVENT_SPIN_UPDATE_DISPLAY } from '../core/GameEvents';
+import { DataGameManager } from '../managers/user.game.profile.manager';
+import { clientApi } from '../network/client.api';
+import { SubmittingPayload } from '../../types/api.type';
 const { ccclass, property } = _decorator;
 
 @ccclass('SubmittingForm')
@@ -21,9 +21,6 @@ export class SubmittingForm extends BaseComponent {
         this.reset();
     }
 
-    update(deltaTime: number) {
-
-    }
     async onSubmitClicked() {
         console.log("Submit button clicked");
 
@@ -35,25 +32,35 @@ export class SubmittingForm extends BaseComponent {
             console.warn("Please fill in all fields");
             return;
         }
-        UIManager.getInstance().showLoading(true);
-        const res = await API.submitPlayerInfo(username, email, phone);
-        console.log("Submit response:", res);
-        this.showNotify(res?.message);
-        UIManager.getInstance().showLoading(false);
-        UIManager.getInstance().showToast(res?.message || "Submit info failed");
+        uiManager().showLoading(true);
 
-        if (res?.success) {
-            this.reset();
-            UIManager.getInstance().showInputForm(false);
-            UIManager.getInstance().showClaimForm(false);
-
-            PlayerData.instance.reset();
-            this.emit(EVENT_SPIN_UPDATE_DISPLAY);
+        const claimingPoint = DataGameManager.claimingPoint;
+        if (claimingPoint <= 0) {
+            this.showNotify("You are not enough score to claim now", true);
+            return;
         }
+
+        const payload: SubmittingPayload = {
+            claimedPoint: claimingPoint,
+            username,
+            email,
+            phone
+        };
+        const resp = await clientApi.game.submitInfo(payload);
+        if (resp.ok === false) {
+            this.showNotify(resp.error);
+        }
+        else {
+            uiManager().showToast(resp.message);
+            this.reset();
+            uiManager().showInputForm(false);
+            uiManager().showClaimForm(false);
+        }
+        uiManager().showLoading(false);
     }
     onCancelClicked() {
         this.reset();
-        UIManager.getInstance().showInputForm(false);
+        uiManager().showInputForm(false);
     }
     reset() {
         if (this.usernameInput) this.usernameInput.string = "";

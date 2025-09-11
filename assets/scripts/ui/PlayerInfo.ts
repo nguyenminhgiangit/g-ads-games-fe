@@ -1,7 +1,8 @@
 import { _decorator, Button, Label } from 'cc';
-import { PlayerData } from '../managers/PlayerData';
 import { BaseComponent } from '../core/BaseComponent';
-import { EVENT_SPIN_UPDATE_DISPLAY } from '../core/GameEvents';
+import { DataGameManager } from '../managers/user.game.profile.manager';
+import { gameReset } from '../services/game.service';
+import { DataChangeType, EVENT_FORCE_DISPLAY, EventForceDisplay } from '../core/GameEvents';
 const { ccclass, property } = _decorator;
 
 @ccclass('PlayerInfo')
@@ -12,30 +13,42 @@ export class PlayerInfo extends BaseComponent {
     @property(Label)
     private lblPlayerTurn: Label = null!;
 
+    @property(Label)
+    private lblMaxTurn: Label = null!;
+
     @property(Button)
     private btnReset: Button = null!;
 
-    protected onLoad(): void {
-        this.listen(EVENT_SPIN_UPDATE_DISPLAY, () => {
-            this.onDisplay();
-        });
+    protected onListenners(): void {
+        this.listen(EVENT_FORCE_DISPLAY, this.onForceDisplay, this);
+
     }
 
-    protected onDisplay(): void {
-        const player = PlayerData.instance;
-        this.lblPlayerId.string = `${player.playerId}`;
-        this.lblPlayerTurn.string = `${player.spinsLeft}`;
+    protected onRefreshUI(): void {
+        const displayName = DataGameManager.displayName;
+        this.lblPlayerId.string = `${displayName}`;
 
-        this.btnReset.node.active = player.spinsLeft < player.maxSpins;
+        const spinLeft = DataGameManager.spinLeft;
+        this.lblPlayerTurn.string = `${spinLeft}`;
+
+        const maxSpins = DataGameManager.maxSpin;
+        this.btnReset.node.active = spinLeft < maxSpins;
+
+        this.lblMaxTurn.string = `/${maxSpins} turns`;
     }
 
-    onResetClicked() {
+    private onForceDisplay(data: EventForceDisplay) {
+        if (data.type === DataChangeType.SPIN_LEFT) {
+            const spinLeft = data.spinLeft ?? 0;
+            this.lblPlayerTurn.string = `${spinLeft}`;
+        }
+    }
+
+    async onResetClicked() {
         console.log("Reset button clicked");
 
-        PlayerData.instance.reset();
-        this.emit(EVENT_SPIN_UPDATE_DISPLAY);
+        //call api
+        await gameReset();
     }
-
-
 }
 

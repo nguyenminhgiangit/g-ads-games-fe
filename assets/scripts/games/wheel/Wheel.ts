@@ -9,6 +9,8 @@ import {
     UITransform,
     Vec3,
 } from 'cc';
+import { WheelPiece } from 'db://assets/types/api.type';
+import { DataGameManager } from '../../managers/user.game.profile.manager';
 const { ccclass, property } = _decorator;
 
 @ccclass('Wheel')
@@ -19,19 +21,21 @@ export class Wheel extends Component {
     @property
     public radius: number = 200;
 
-    private values: (string | number)[] = [];
     private colors: Color[] = [];
+
+    private get Pieces(): Array<WheelPiece> {
+        return DataGameManager.game.pieces;
+    }
 
     /**
      * Khởi tạo bánh xe với danh sách giá trị (strings hoặc numbers)
      */
-    public init(values: (string | number)[]) {
-        // set values
-        this.values = values.slice();
+    public init() {
+        const pieces = this.Pieces;
 
         // sinh màu cho từng lát (phân bố hue đều)
         this.colors = [];
-        const n = this.values.length;
+        const n = pieces.length;
         for (let i = 0; i < n; i++) {
             const hue = (i * 360) / n;
             this.colors.push(this.hsvToRgb(hue, 0.55, 0.95));
@@ -50,12 +54,13 @@ export class Wheel extends Component {
     }
 
     private drawWheel() {
-        if (!this.g || this.values.length === 0) return;
+        const pieces = this.Pieces;
+        if (!this.g || pieces.length === 0) return;
 
-        const g = this.g;
-        g.clear();
+        // const g = this.g;
+        // g.clear();
 
-        const n = this.values.length;
+        const n = pieces.length;
         const sliceAngle = (2 * Math.PI) / n;
 
         for (let i = 0; i < n; i++) {
@@ -63,27 +68,31 @@ export class Wheel extends Component {
             const endAngle = (i + 1) * sliceAngle;
 
             // vẽ lát: moveTo -> arc -> lineTo -> fill
-            g.moveTo(0, 0);
-            g.arc(0, 0, this.radius, startAngle, endAngle, false); // counterclockwise = false
-            g.lineTo(0, 0);
+            // g.moveTo(0, 0);
+            // g.arc(0, 0, this.radius, startAngle, endAngle, false); // counterclockwise = false
+            // g.lineTo(0, 0);
 
             // set color và fill cho từng lát
-            g.fillColor = this.colors[i];
-            g.fill();
+            // g.fillColor = this.colors[i];
+            // g.fill();
 
             // ---- tạo label cho lát ----
             const midAngle = (startAngle + endAngle) / 2; // rad
-            const textRadius = this.radius * 0.62;
+            const textRadius = this.radius * 0.82;
             const x = Math.cos(midAngle) * textRadius;
             const y = Math.sin(midAngle) * textRadius;
 
             const labelNode = new Node(`label_${i}`);
             const lbl = labelNode.addComponent(Label);
 
-            lbl.string = String(this.values[i]);
+            lbl.string = String(pieces[i].reward);
             lbl.fontSize = 20;
 
             lbl.color = Color.RED;
+
+            lbl.enableOutline = true;
+            lbl.outlineWidth = 2;
+            lbl.outlineColor = Color.WHITE;
             // chọn màu chữ tương phản (đen hoặc trắng) để đọc rõ
             // const bg = this.colors[i];
             // lbl.color = this.chooseContrastColor(bg);

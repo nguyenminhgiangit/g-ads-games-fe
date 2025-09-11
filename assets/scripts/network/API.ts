@@ -1,3 +1,5 @@
+import { getUUID } from "../helpers/device.helper";
+
 const API_URL = "https://script.google.com/macros/s/AKfycbyHdOT7JcqyQgVIGQkj8SX60U8u9XTCx0HWX7gJRXA3Whay0VNT-OLKYtSpAtDAWrJTOw/exec";
 enum APIAction {
     SubmitPlayerInfo = "submitPlayerInfo",
@@ -52,7 +54,7 @@ export class API {
     }
     static async spinWheel(playerId: string = 'p-tester') {
         try {
-            const resp = await fetch("http://localhost:3004/api/spin", {
+            const resp = await fetch("http://localhost:3004/api/wheel/spin", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -80,4 +82,50 @@ export class API {
             return null;
         }
     }
+    static async loadWheelLayout() {
+        try {
+            const resp = await fetch("http://localhost:3004/api/wheel/layout");
+
+            if (!resp.ok) {
+                const error = await resp.json();
+                console.error("Get pea error:", error);
+                return null;
+            }
+
+            const data = await resp.json();
+            console.log("Wheel layout:", data);
+
+            return data;
+        } catch (err) {
+            console.error("Network error:", err);
+            return null;
+        }
+    }
+
+    static async guest(cbFunc?: Function) {
+        try {
+            const uuid = getUUID();
+            const resp = await fetch("http://localhost:3004/api/auth/guest", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ uuid }),
+            });
+
+            if (!resp.ok) {
+                const error = await resp.json();
+                console.error("guest error:", error);
+                return null;
+            }
+
+            const data = await resp.json();
+            console.log("Guest result:", data);
+            return data;
+        } catch (err) {
+            console.error("Network error:", err);
+            return null;
+        }
+    }
+
 }

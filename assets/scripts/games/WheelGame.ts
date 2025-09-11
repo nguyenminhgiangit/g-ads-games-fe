@@ -1,13 +1,15 @@
-import { _decorator, Game, game, Node, tween, v3, Vec3 } from "cc";
+import { _decorator, Node, tween, Vec3 } from "cc";
 import { BaseGame } from "../core/BaseGame";
 import { registerGame } from "../core/RegisterGame";
 import { Wheel } from "./wheel/Wheel";
-import { PlayerData } from "../managers/PlayerData";
-import { EVENT_SPIN_RESULT, EVENT_SPIN_UPDATE_DISPLAY } from "../core/GameEvents";
-import { UIManager } from "../ui/UIManager";
 import { PulseEffect } from "../common/PulseEffect";
 import { Util } from "../utils/Util";
-import { API } from "../network/API";
+import { DataGameManager } from "../managers/user.game.profile.manager";
+import { GameState, WheelPiece } from "../../types/api.type";
+import { clientApi } from "../network/client.api";
+import { indexOfPieceByKey } from "../helpers/game.helper";
+import { DataChangeType, EVENT_FORCE_DISPLAY, EVENT_SPIN_UPDATE_DISPLAY } from "../core/GameEvents";
+import { uiManager } from "../ui/UIManager";
 
 const { ccclass, property } = _decorator;
 
@@ -21,7 +23,7 @@ export class WheelGame extends BaseGame {
 
     @property slices: number = 12;        // số lát
 
-    private values: number[] = [];
+    // private values: number[] = [];
     private currentRotation: number = 0;
     private isSpinning: boolean = false;
 
@@ -29,41 +31,48 @@ export class WheelGame extends BaseGame {
     private lastTickIndex: number = -1;
     private sliceAngle: number = 0;
 
-    protected onLoad(): void {
-        this.listen(EVENT_SPIN_UPDATE_DISPLAY, () => {
-            this.onDisplay();
-        });
-    }
-
     getGameName(): string {
         return "WheelGame";
     }
 
-    initGame(): void {
-        console.log("WheelGame started with rates:", this.rates);
-
-        // 1..12 rồi xáo trộn
-        this.values = Array.from({ length: this.slices }, (_, i) => i + 1);
-        this.shuffle(this.values);
-        this.sliceAngle = 360 / this.values.length;
-
-        this.wheel.init(this.values);
+    get Pieces(): Array<WheelPiece> {
+        return DataGameManager.game.pieces;
     }
 
-    private shuffle(arr: number[]) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
+    async initGame() {
+        // const resp = await API.loadWheelLayout();
+
+        const pieces = this.Pieces;
+        // this.values = pieces?.map(p => p.reward) ?? null;
+
+        // console.log('Wheel start with:', this.values);
+
+        // if (!this.values || this.values.length === 0) {
+        //     console.log("No layout from server, use default");
+        //     // 1..12 rồi xáo trộn
+        //     this.values = Array.from({ length: this.slices }, (_, i) => i + 1);
+        //     this.shuffle(this.values);
+        // }
+
+        this.sliceAngle = 360 / pieces.length;
+
+        this.wheel.init();
     }
 
-    protected onDisplay(): void {
+    // private shuffle(arr: number[]) {
+    //     for (let i = arr.length - 1; i > 0; i--) {
+    //         const j = Math.floor(Math.random() * (i + 1));
+    //         [arr[i], arr[j]] = [arr[j], arr[i]];
+    //     }
+    // }
+
+    protected onRefreshUI(): void {
         this.spinState();
     }
 
     private spinState() {
-        const playerData = PlayerData.instance;
-        const hasSpins = playerData.spinsLeft > 0;
+        const spinLeft = DataGameManager.spinLeft;
+        const hasSpins = spinLeft > 0;
         const isEffect = hasSpins && !this.isSpinning;
         if (isEffect) {
             this.pointer.startPulse();
@@ -79,25 +88,35 @@ export class WheelGame extends BaseGame {
             console.log("Đang quay, vui lòng chờ...");
             return;
         }
-        this.isSpinning = true;
-
-        // const resp = await API.spinWheel();
-        // console.log('Spin result from server:', resp);
-
-        const playerData = PlayerData.instance;
-        if (playerData.spinsLeft <= 0) {
-            UIManager.getInstance().showToast("Out of spins!");
+        const spinLeft = DataGameManager.spinLeft;
+        if (spinLeft <= 0) {
+            uiManager().showToast("Out of spins!");
             return;
         }
-        playerData.decreaseSpins();
-        this.emit(EVENT_SPIN_UPDATE_DISPLAY);
 
-        const randomIndex = Math.floor(Math.random() * this.values.length);
-        // const index = resp?.result?.value ?? randomIndex;
-        // console.log("Quay tới index:", index, "value:", this.values[index]);
-        this.animateWheel(randomIndex);
+        this.isSpinning = true;
+
+        const gameId = DataGameManager.gameId;
+        const resp = await clientApi.game.spin({ gameId });
+        console.log('Spin result from server:', resp);
+        if (resp.ok === false) {
+            console.log('Cannot get result key: ', resp.error);
+            this.isSpinning = false;
+            uiManager().showToast(resp.error);
+            return;
+        }
+        const keyResult = resp.key;
+        const state = resp.state;
+        //chỉ force hiển thị lại thông tin spinLeft, chưa update vào data
+        this.emit(EVENT_FORCE_DISPLAY, { type: DataChangeType.SPIN_LEFT, spinLeft: state.spinLeft });
+        //update spinLeft trước, score chờ xong animation mới update tiếp
+        // DataGameManager.stateApply({ spinLeft: state.spinLeft, score: oldScore });
+        const pieces = this.Pieces;
+        const index = indexOfPieceByKey(pieces, keyResult);
+        console.log("Quay tới index:", index);
+        this.animateWheel(index, state);
     }
-    private animateWheel(index: number) {
+    private animateWheel(index: number, state: GameState) {
         // Reset tick
         this.lastTickIndex = -1;
 
@@ -115,6 +134,9 @@ export class WheelGame extends BaseGame {
         // Cho nó vượt thêm 10 độ (như bị trôi qua chốt)
         const overshootAngle = this.currentRotation + 10;
         this.lastTickIndex = -1;
+        const pieces = this.Pieces;
+        const resultValue = pieces[index].reward;
+
         tween(this.wheelContainer)
             // Quay tới overshoot, giảm tốc
             .to(5, { eulerAngles: new Vec3(0, 0, -overshootAngle) }, { easing: 'quartOut' })
@@ -122,26 +144,27 @@ export class WheelGame extends BaseGame {
             .to(0.3, { eulerAngles: new Vec3(0, 0, -this.currentRotation) }, { easing: 'quadOut' })
             .delay(1.0)
             .call(() => {
-                console.log("🎯 Kết quả:", this.values[index]);
-                this.onResult(this.values[index]);
+                console.log("🎯 Kết quả:", resultValue);
+                this.onResult(index, state);
             })
             .start();
     }
 
-    private async onResult(result: number) {
+    private async onResult(index: number, state: GameState) {
         await Util.Sleep(500);
         this.isSpinning = false;
+        DataGameManager.stateApply(state);
+
+        const pieces = this.Pieces;
+        const result = pieces[index].reward;
+
         // Xử lý kết quả quay
         console.log("Show result:: ", result);
 
-        const playerData = PlayerData.instance;
-        playerData.increaseScore(result);
-        this.emit(EVENT_SPIN_UPDATE_DISPLAY);
-
-        const hasSpins = playerData.spinsLeft > 0;
-        const claimingPoint = playerData.getClaimingPoint() || 0;
+        const hasSpins = state.spinLeft > 0;
+        const claimingPoint = DataGameManager.claimingPoint || 0;
         if (!hasSpins || claimingPoint > 0) {
-            UIManager.getInstance().showClaimForm(true);
+            uiManager().showClaimForm(true);
         }
     }
 
