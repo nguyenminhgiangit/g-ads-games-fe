@@ -45,8 +45,6 @@ export class PlayerInfo extends BaseComponent {
     }
 
     async onResetClicked() {
-        console.log("Reset button clicked");
-
         //call api
         await gameReset();
     }

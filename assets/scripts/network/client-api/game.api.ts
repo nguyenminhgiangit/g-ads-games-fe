@@ -6,7 +6,6 @@ export const game = {
     async spin(payload: { gameId?: "wheel" | "slot"; bet?: number } = {}): Promise<SpinResult> {
         try {
             const resp = await baseApi.post<SpinResponse>("game/spin", payload, { timeoutMs: REQUEST_TIMEOUT_MS });
-            console.log('spin resp:: ', resp);
             return {
                 ok: true,
                 key: resp.key ?? null,
@@ -19,7 +18,6 @@ export const game = {
     async reset(payload: { gameId?: "wheel" | "slot" } = {}) {
         try {
             const resp = await baseApi.post<ResetResponse>("game/reset", payload, { timeoutMs: REQUEST_TIMEOUT_MS });
-            console.log('reset resp:: ', resp);
             return {
                 ok: true,
                 state: resp.state ?? null
@@ -34,7 +32,6 @@ export const game = {
     async submitInfo(payload: SubmittingPayload) {
         try {
             const resp = await baseApi.post<SubmitResponse>("game/submit-info", payload, { timeoutMs: REQUEST_TIMEOUT_MS });
-            console.log('submitInfo resp:: ', resp);
             return {
                 ok: true,
                 state: resp.state ?? null,

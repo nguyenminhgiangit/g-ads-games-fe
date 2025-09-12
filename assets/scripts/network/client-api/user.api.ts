@@ -11,7 +11,6 @@ export const users = {
   async gameMe(): Promise<GameMeResult> {
     try {
       const resp = await baseApi.get<UserGameProfile>("users/game-me", { timeoutMs: REQUEST_TIMEOUT_MS });
-      console.log('gameMe:: ', resp);
       DataGameManager.apply(resp);
       return {
         ok: true,

@@ -1,4 +1,4 @@
-import { _decorator, Component, Prefab, instantiate, resources } from 'cc';
+import { _decorator, Component, Prefab, instantiate, resources, log } from 'cc';
 import { BaseGame } from './BaseGame';
 import { GameRegistry } from './GameRegistry';
 import { clientApi } from '../network/client.api';
@@ -25,13 +25,13 @@ export class GameManager extends Component {
             return;
         }
 
-        console.warn('GameManager start >> ', DataGameManager.gameId);
+        log('GameManager start >> ', DataGameManager.gameId);
         const currentGameName = getGamePrefabName(DataGameManager.gameId);
         await this.loadGame(currentGameName);
     }
 
     private loadGame(gameName: string): Promise<void> {
-        console.log('loadGame... ', gameName);
+        log('loadGame... ', gameName);
         return new Promise((resolve, reject) => {
             resources.load(`prefabs/games/${gameName}`, Prefab, (err, prefab: Prefab) => {
                 if (err) return reject(err);
@@ -63,10 +63,10 @@ export class GameManager extends Component {
     }
 
     private async onGuest() {
-        console.log('onGuest...');
+        log('onGuest...');
         const respAccess = await clientApi.auth.guestLogin();
         if (respAccess.ok === false) {
-            console.log('onGuest auth failed:: ', respAccess.error);
+            log('onGuest auth failed:: ', respAccess.error);
             return { ok: false, error: respAccess.error };
         }
         const message = respAccess.isNew === true ? "Welcome to you!" : "Welcome back!";
@@ -74,7 +74,7 @@ export class GameManager extends Component {
 
         const respInfo = await clientApi.users.gameMe();
         if (respInfo.ok === false) {
-            console.log('onGuest info failed:: ', respInfo.error);
+            log('onGuest info failed:: ', respInfo.error);
             return { ok: false, error: respInfo.error };
         }
         return { ok: true }

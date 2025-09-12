@@ -22,8 +22,6 @@ export class SubmittingForm extends BaseComponent {
     }
 
     async onSubmitClicked() {
-        console.log("Submit button clicked");
-
         const username = this.usernameInput?.string || '';
         const email = this.emailInput?.string || '';
         const phone = this.phoneInput?.string || '';

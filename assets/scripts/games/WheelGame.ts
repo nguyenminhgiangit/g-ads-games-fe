@@ -1,4 +1,4 @@
-import { _decorator, Node, tween, Vec3 } from "cc";
+import { _decorator, log, Node, tween, Vec3 } from "cc";
 import { BaseGame } from "../core/BaseGame";
 import { registerGame } from "../core/RegisterGame";
 import { Wheel } from "./wheel/Wheel";
@@ -87,7 +87,7 @@ export class WheelGame extends BaseGame {
 
     private async onSpin() {
         if (this.isSpinning) {
-            console.log("Đang quay, vui lòng chờ...");
+            log("Đang quay, vui lòng chờ...");
             return;
         }
         const spinLeft = DataGameManager.spinLeft;
@@ -101,9 +101,8 @@ export class WheelGame extends BaseGame {
 
         const gameId = DataGameManager.gameId;
         const resp = await clientApi.game.spin({ gameId });
-        console.log('Spin result from server:', resp);
         if (resp.ok === false) {
-            console.log('Cannot get result key: ', resp.error);
+            log('Cannot get result key: ', resp.error);
             this.isSpinning = false;
             uiManager().showToast(resp.error);
             return;
@@ -116,7 +115,6 @@ export class WheelGame extends BaseGame {
         // DataGameManager.stateApply({ spinLeft: state.spinLeft, score: oldScore });
         const pieces = this.Pieces;
         const index = indexOfPieceByKey(pieces, keyResult);
-        console.log("Quay tới index:", index);
         this.animateWheel(index, state);
     }
     private animateWheel(index: number, state: GameState) {
@@ -147,7 +145,7 @@ export class WheelGame extends BaseGame {
             .to(0.3, { eulerAngles: new Vec3(0, 0, -this.currentRotation) }, { easing: 'quadOut' })
             .delay(1.0)
             .call(() => {
-                console.log("🎯 Kết quả:", resultValue);
+                log("🎯 Kết quả:", resultValue);
                 this.onResult(index, state);
             })
             .start();
@@ -166,7 +164,7 @@ export class WheelGame extends BaseGame {
         DataGameManager.stateApply(state);
 
         // Xử lý kết quả quay
-        console.log("Show result:: ", result);
+        log("Show result:: ", result);
 
         const hasSpins = state.spinLeft > 0;
         const claimingPoint = DataGameManager.claimingPoint || 0;

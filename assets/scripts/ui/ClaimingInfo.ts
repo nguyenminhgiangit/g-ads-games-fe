@@ -13,7 +13,6 @@ export class ClaimingInfo extends BaseComponent {
     private btnClaim: Button = null!;
 
     onClaimClicked() {
-        console.log("Claim button clicked");
         uiManager().showClaimForm(true);
     }
     protected onRefreshUI(): void {

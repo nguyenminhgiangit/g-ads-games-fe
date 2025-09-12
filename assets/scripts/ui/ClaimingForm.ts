@@ -1,4 +1,4 @@
-import { _decorator, Button, Label } from 'cc';
+import { _decorator, Button, Label, log } from 'cc';
 import { BaseComponent } from '../core/BaseComponent';
 import { DataGameManager } from '../managers/user.game.profile.manager';
 import { gameReset } from '../services/game.service';
@@ -21,10 +21,10 @@ export class ClaimingForm extends BaseComponent {
         this.enableFocusEvents()
     }
 
-    start() {
-        super.start();
-        uiManager().showClaimForm(false);
-    }
+    // start() {
+    //     super.start();
+    //     uiManager().showClaimForm(false);
+    // }
 
     protected onEnable(): void {
         this.onRefreshUI();
@@ -35,14 +35,13 @@ export class ClaimingForm extends BaseComponent {
     }
 
     onClaimClicked() {
-        console.log("Claim button clicked");
         uiManager().showInputForm(true);
     }
     async onReplayClicked() {
         //call api
         const rs = await gameReset();
-        if (rs === true)
-            uiManager().showClaimForm(false);
+        // if (rs === true)
+        //     uiManager().showClaimForm(false);
     }
     onCloseClicked() {
         uiManager().showClaimForm(false);
@@ -57,7 +56,8 @@ export class ClaimingForm extends BaseComponent {
         this.lblClaimingPoint.string = `${claimingPoint}`;
         this.btnClaim.interactable = claimingPoint > 0;
 
-        const isShow = claimingPoint > 0 || spinLeft <= 0;
+        const isNullData = DataGameManager.user == null;//DataGameManager.use null khi không login được, show popup khi onGain mà chưa onguest
+        const isShow = !isNullData && (claimingPoint > 0 || spinLeft <= 0);
         uiManager().showClaimForm(isShow);
     }
 }
