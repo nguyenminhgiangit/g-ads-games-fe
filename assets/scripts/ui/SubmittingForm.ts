@@ -51,6 +51,10 @@ export class SubmittingForm extends BaseComponent {
             this.showNotify(resp.error);
         }
         else {
+            //update state
+            const newState = resp.state;
+            DataGameManager.stateApply(newState);
+
             uiManager().showToast(resp.message);
             this.reset();
             uiManager().showInputForm(false);

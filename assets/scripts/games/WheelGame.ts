@@ -8,8 +8,9 @@ import { DataGameManager } from "../managers/user.game.profile.manager";
 import { GameState, WheelPiece } from "../../types/api.type";
 import { clientApi } from "../network/client.api";
 import { indexOfPieceByKey } from "../helpers/game.helper";
-import { DataChangeType, EVENT_FORCE_DISPLAY, EVENT_SPIN_UPDATE_DISPLAY } from "../core/GameEvents";
+import { DataChangeType, EVENT_FORCE_DISPLAY } from "../core/GameEvents";
 import { uiManager } from "../ui/UIManager";
+import { ResultFX } from "../ui/ResultFX";
 
 const { ccclass, property } = _decorator;
 
@@ -20,6 +21,7 @@ export class WheelGame extends BaseGame {
     @property(Wheel) wheel: Wheel | null = null;
 
     @property(PulseEffect) pointer: PulseEffect | null = null; // Pointer
+    @property(ResultFX) resultFX!: ResultFX; //kết quả
 
     @property slices: number = 12;        // số lát
 
@@ -95,6 +97,7 @@ export class WheelGame extends BaseGame {
         }
 
         this.isSpinning = true;
+        this.spinState();
 
         const gameId = DataGameManager.gameId;
         const resp = await clientApi.game.spin({ gameId });
@@ -151,12 +154,16 @@ export class WheelGame extends BaseGame {
     }
 
     private async onResult(index: number, state: GameState) {
-        await Util.Sleep(500);
-        this.isSpinning = false;
-        DataGameManager.stateApply(state);
+        // await Util.Sleep(500);
 
         const pieces = this.Pieces;
         const result = pieces[index].reward;
+
+        this.onResultFX(result);
+        await Util.Sleep(3000);
+
+        this.isSpinning = false;
+        DataGameManager.stateApply(state);
 
         // Xử lý kết quả quay
         console.log("Show result:: ", result);
@@ -166,6 +173,17 @@ export class WheelGame extends BaseGame {
         if (!hasSpins || claimingPoint > 0) {
             uiManager().showClaimForm(true);
         }
+    }
+
+    private onResultFX(rewardValue: number, pieceColor?: string) {
+        const big = rewardValue >= 10;
+        this.resultFX.play(String(rewardValue), {
+            fontSize: big ? 384 : 400,
+            color: big ? '#FF00E0' : '#00FF00',
+            stroke: '#FFFFFF',
+            hold1: big ? 0.24 : 0.18,
+            hold2: 0.12,
+        });
     }
 
     update(dt: number) {

@@ -21,7 +21,7 @@ export class Wheel extends Component {
     @property
     public radius: number = 200;
 
-    private colors: Color[] = [];
+    // private colors: Color[] = [];
 
     private get Pieces(): Array<WheelPiece> {
         return DataGameManager.game.pieces;
@@ -34,12 +34,13 @@ export class Wheel extends Component {
         const pieces = this.Pieces;
 
         // sinh màu cho từng lát (phân bố hue đều)
-        this.colors = [];
-        const n = pieces.length;
-        for (let i = 0; i < n; i++) {
-            const hue = (i * 360) / n;
-            this.colors.push(this.hsvToRgb(hue, 0.55, 0.95));
-        }
+        // this.colors = [];
+        // const n = pieces.length;
+        // for (let i = 0; i < n; i++) {
+        //     const hue = (i * 360) / n;
+        //     const colorNum = this.hsvToRgb(hue, 0.55, 0.95);
+        //     this.colors.push(colorNum);
+        // }
 
         // xoá label cũ (chỉ xoá node con có Label để giữ Graphics trên node chính)
         for (let i = this.node.children.length - 1; i >= 0; i--) {
