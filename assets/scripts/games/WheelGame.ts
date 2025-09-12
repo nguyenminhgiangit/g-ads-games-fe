@@ -160,7 +160,7 @@ export class WheelGame extends BaseGame {
         const result = pieces[index].reward;
 
         this.onResultFX(result);
-        await Util.Sleep(3000);
+        await Util.Sleep(1500);
 
         this.isSpinning = false;
         DataGameManager.stateApply(state);

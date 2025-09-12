@@ -44,7 +44,7 @@ class TokenRefreshManagerImpl {
         if (!refreshToken) return false;
         const uuid = getUUID();
         const platform = detectPlatform();
-        const url = new URL("/auth/refresh-token", this.baseURL).toString();
+        const url = new URL("auth/refresh-token", this.baseURL).toString();
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
