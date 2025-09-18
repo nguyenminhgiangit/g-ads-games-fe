@@ -6,7 +6,6 @@ import { DataGameManager } from '../managers/user.game.profile.manager';
 import { getGamePrefabName } from '../helpers/game.helper';
 import { uiManager } from '../ui/UIManager';
 import { NoticeType } from '../common/Notice';
-import { Toast } from '../common/Toast';
 
 const { ccclass } = _decorator;
 

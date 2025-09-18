@@ -114,3 +114,4 @@ export type SubmittingPayload = {
 export type OnGuestOk = { ok: true; };
 export type OnGuestErr = { ok: false; error: string };
 export type OnGuestResult = SubmitOk | SubmitErr;
+

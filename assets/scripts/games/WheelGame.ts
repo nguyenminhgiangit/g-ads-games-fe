@@ -105,6 +105,7 @@ export class WheelGame extends BaseGame {
             log('Cannot get result key: ', resp.error);
             this.isSpinning = false;
             uiManager().showToast(resp.error);
+            DataGameManager.stateApply(DataGameManager.state)
             return;
         }
         const keyResult = resp.key;
