@@ -1,6 +1,7 @@
 import { _decorator, Component, Node } from 'cc';
 import { Toast } from '../common/Toast';
 import { Notice, NoticeType } from '../common/Notice';
+import { ActivityPopup } from './ActivityPopup';
 
 const { ccclass, property } = _decorator;
 
@@ -27,6 +28,9 @@ class UIManager extends Component {
     @property(Node)
     noticeLayer: Node = null!;
 
+    @property(Node)
+    popupLayer: Node = null!;
+
     onLoad() {
         UIManager.instance = this;
 
@@ -35,6 +39,7 @@ class UIManager extends Component {
 
         this.toastLayer.active = true;
         this.noticeLayer.active = true;
+        this.popupLayer.active = true;
     }
 
     showLoading(show: boolean) {
@@ -61,6 +66,10 @@ class UIManager extends Component {
         cbFuncNo?: Function
     ) {
         Notice.getInstance().show(title, content, type, cbFuncYes, cbFuncNo);
+    }
+
+    showActivityPopup(show: boolean) {
+        ActivityPopup.getInstance().show(show);
     }
 }
 export function uiManager() {

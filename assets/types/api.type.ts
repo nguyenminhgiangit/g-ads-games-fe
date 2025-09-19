@@ -23,7 +23,7 @@ export type LoginErr = { ok: false; error: string };
 export type LoginResult = LoginOk | LoginErr;
 
 export type UserProfile = {
-    id: string;
+    id?: string;
     email?: string;
     displayName?: string;
 };

@@ -1,9 +1,22 @@
-import { ResetResponse, SpinResponse, SpinResult, SubmitResponse, SubmittingPayload } from "db://assets/types/api.type";
+import { GameMeResult, ResetResponse, SpinResponse, SpinResult, SubmitResponse, SubmittingPayload, UserGameProfile } from "db://assets/types/api.type";
 import { REQUEST_TIMEOUT_MS } from "../../configs/api.config";
 import { baseApi } from "./base.api";
 import { ActivitiesPayload, ActivitiesResponse } from "db://assets/types/activity.type";
+import { DataGameManager } from "../../managers/user.game.profile.manager";
 
 export const game = {
+    async me(): Promise<GameMeResult> {
+        try {
+            const resp = await baseApi.get<UserGameProfile>("game/me", { timeoutMs: REQUEST_TIMEOUT_MS });
+            DataGameManager.apply(resp);
+            return {
+                ok: true,
+                data: resp
+            };
+        } catch (e: any) {
+            return { ok: false, error: e?.message || "Get user game is failed" };
+        }
+    },
     async spin(payload: { gameId?: "wheel" | "slot"; bet?: number } = {}): Promise<SpinResult> {
         try {
             const resp = await baseApi.post<SpinResponse>("game/spin", payload, { timeoutMs: REQUEST_TIMEOUT_MS });
@@ -66,10 +79,3 @@ export const game = {
         }
     }
 };
-
-export const DEFAULT_PAGE_SIZE_MIN = 1;
-export const DEFAULT_PAGE_SIZE_MAX = 200;
-export const DEFAULT_INDEX_PAGE = DEFAULT_PAGE_SIZE_MIN;
-// utils nhỏ
-const clamp = (n: number, min: number, max: number) =>
-    Math.max(min, Math.min(max, Math.floor(n)));

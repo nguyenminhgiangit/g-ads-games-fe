@@ -71,7 +71,7 @@ export class GameManager extends Component {
         const message = respAccess.isNew === true ? "Welcome to you!" : "Welcome back!";
         uiManager().showToast(message);
 
-        const respInfo = await clientApi.users.gameMe();
+        const respInfo = await clientApi.game.me();
         if (respInfo.ok === false) {
             log('onGuest info failed:: ', respInfo.error);
             return { ok: false, error: respInfo.error };
