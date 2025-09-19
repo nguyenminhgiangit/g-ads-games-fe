@@ -1,13 +1,13 @@
-import { _decorator, Component, Label, tween, Vec3, UIOpacity, Node, Prefab, instantiate } from 'cc';
+import { _decorator, Component, tween, Vec3, UIOpacity, Node, Prefab, instantiate, log } from 'cc';
 import { Util } from '../utils/Util';
 import { clientApi } from '../network/client.api';
 import { Toast } from '../common/Toast';
-import { ActivitiesResponse, Activity } from '../../types/activity.type';
+import { ActivitiesResponse } from '../../types/activity.type';
 import { ActivityItem } from './ActivityItem';
 import { PageControl, PayloadPageControl } from './PageControl';
 const { ccclass, property } = _decorator;
 
-const PAGE_SIZE = 2;
+const PAGE_SIZE = 10;
 const DEFAULT_PAGE_SIZE_MIN = 1;
 const DEFAULT_PAGE_SIZE_MAX = 200;
 const DEFAULT_INDEX_PAGE = DEFAULT_PAGE_SIZE_MIN;
@@ -56,19 +56,16 @@ export class ActivityPopup extends Component {
 
     /** Reset về trạng thái ẩn */
     reset() {
-        console.log('reset ... ');
         this.node.active = false;
         this.node.setScale(new Vec3(1, 1, 1));
         this.opacityComp.opacity = 0;
     }
 
     show(_show: boolean = true) {
-        console.log('show ... ', _show);
         if (_show === false) {
             this.hide();
             return;
         }
-        console.log('show ... ');
         this.node.active = true;
 
         // Reset trạng thái trước khi play animation
@@ -139,7 +136,7 @@ export class ActivityPopup extends Component {
                 pageSize: PAGE_SIZE
             }
         );
-        console.log('activities resp:: ', resp);
+        log('activities resp:: ', resp);
         const activities = resp.data?.activities ?? [];
         const count = activities.length;
         if (count == 0) {
